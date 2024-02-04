@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+    app:
+        build: .
+        environment:
+            - PHX_HOST=localhost
+            - DATABASE_URL=ecto://root:password@host.docker.internal:5432/simple_game_server_dev
+            - SECRET_KEY_BASE="XU3nI1FdvUuLapbVWepJbBhMHyHUOWiOlTBY9kWBNZ80vIbVJ06WNdYo6ULyaUYv"
+            - PORT=8080
+        ports:
+            - 8082:8080
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        command: /app/bin/simple_game_server start
+
