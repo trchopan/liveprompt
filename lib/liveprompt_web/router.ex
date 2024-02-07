@@ -66,6 +66,8 @@ defmodule LivepromptWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{LivepromptWeb.UserAuth, :ensure_authenticated}] do
+      live "/view", PromptLive, :view
+      live "/control", PromptLive, :control
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end
