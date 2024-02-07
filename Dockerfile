@@ -5,21 +5,6 @@ ARG DEBIAN_VERSION=bullseye-20231009-slim
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 
-###
-
-FROM node:20 as nodebuilder
-
-WORKDIR /app
-
-COPY front/package.json .
-COPY front/package-lock.json .
-
-RUN npm ci
-
-COPY front .
-
-RUN npm run build
-
 FROM ${BUILDER_IMAGE} as builder
 
 # install build dependencies
@@ -49,9 +34,6 @@ RUN mix deps.compile
 
 COPY priv priv
 
-# Get front dist folder
-COPY --from=nodebuilder /app/dist/. priv/static/front/
-
 COPY lib lib
 
 COPY assets assets
@@ -65,7 +47,6 @@ RUN mix compile
 # Changes to config/runtime.exs don't require recompiling the code
 COPY config/runtime.exs config/
 
-COPY rel rel
 RUN mix release
 
 # start a new build stage so that the final image will only contain
