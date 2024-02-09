@@ -3,3 +3,11 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+
+body {
+    @apply min-h-screen;
+}
+
+.lightout {
+    @apply bg-black;
+}

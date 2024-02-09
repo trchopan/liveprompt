@@ -21,6 +21,11 @@ defmodule LivepromptWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live_session :default do
+      live "/view/:uuid", ViewLive, :view
+      live "/control/:uuid", ControlLive, :control
+    end
   end
 
   # Other scopes may use custom stacks.
@@ -65,9 +70,8 @@ defmodule LivepromptWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     live_session :require_authenticated_user,
-      on_mount: [{LivepromptWeb.UserAuth, :ensure_authenticated}] do
-      live "/view", PromptLive, :view
-      live "/control", PromptLive, :control
+      on_mount: [{LivepromptWeb.UserAuth, :ensure_authenticated}],
+      layout: {LivepromptWeb.Layouts, :with_topnav} do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end

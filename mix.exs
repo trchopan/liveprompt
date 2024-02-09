@@ -1,10 +1,12 @@
 defmodule Liveprompt.MixProject do
   use Mix.Project
 
+  @app_version "0.1.0"
+
   def project do
     [
       app: :liveprompt,
-      version: "0.1.0",
+      version: @app_version,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -19,7 +21,8 @@ defmodule Liveprompt.MixProject do
   def application do
     [
       mod: {Liveprompt.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools],
+      version: @app_version
     ]
   end
 
@@ -36,6 +39,7 @@ defmodule Liveprompt.MixProject do
       {:phoenix, "~> 1.7.10"},
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.10"},
+      {:earmark, "~> 1.4"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 3.3"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},

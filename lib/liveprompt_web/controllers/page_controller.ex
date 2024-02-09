@@ -2,8 +2,6 @@ defmodule LivepromptWeb.PageController do
   use LivepromptWeb, :controller
 
   def home(conn, _params) do
-    # The home page is often custom made,
-    # so skip the default app layout.
-    render(conn, :home, layout: false)
+    render(conn, :home, layout: {LivepromptWeb.Layouts, :with_topnav})
   end
 end

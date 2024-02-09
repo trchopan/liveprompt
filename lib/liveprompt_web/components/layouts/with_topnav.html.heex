@@ -1,0 +1,62 @@
+<header class="py-3 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row place-content-between border-b border-stone-100">
+  <div class="flex items-center gap-4 font-semibold leading-6 text-sm">
+    <a href="/" class="bg-brand/5 text-brand md:rounded-full px-2 hover:text-stone-300">
+      <h1 class="font-bold">Liveprompt v<%= Application.spec(:liveprompt, :vsn) %></h1>
+    </a>
+    <p>
+      <a href="https://github.com/phoenixframework/phoenix" class="hover:text-stone-300">
+        built with Phoenix v<%= Application.spec(:phoenix, :vsn) %>
+      </a>
+    </p>
+    <a href="https://chop.dev" class="hover:text-stone-300">
+      by choptran
+    </a>
+  </div>
+  <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end order-first md:order-last">
+    <%= if @current_user do %>
+      <li class="text-[0.8125rem] leading-6 text-zinc-900">
+        <%= @current_user.email %>
+      </li>
+      <li>
+        <.link
+          href={~p"/users/settings"}
+          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+        >
+          Settings
+        </.link>
+      </li>
+      <li>
+        <.link
+          href={~p"/users/log_out"}
+          method="delete"
+          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+        >
+          Log out
+        </.link>
+      </li>
+    <% else %>
+      <li>
+        <.link
+          href={~p"/users/register"}
+          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+        >
+          Register
+        </.link>
+      </li>
+      <li>
+        <.link
+          href={~p"/users/log_in"}
+          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+        >
+          Log in
+        </.link>
+      </li>
+    <% end %>
+  </ul>
+</header>
+<main class="px-4 py-20 sm:px-6 lg:px-8 md:py-1">
+  <div class="mx-auto max-w-2xl">
+    <.flash_group flash={@flash} />
+    <%= @inner_content %>
+  </div>
+</main>

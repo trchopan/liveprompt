@@ -1,8 +1,10 @@
-<.flash_group flash={@flash} />
 <div class="flex flex-col gap-4 items-center">
   <div class="py-10 text-center flex flex-col gap-5">
-    <h1 class="text-3xl font-bold underline">Liveprompt</h1>
-    <p>This is an app to control teleprompter</p>
+    <h1 class="text-3xl font-bold">Liveprompt</h1>
+    <p>Remote control teleprompter using the web in real-time.</p>
+    <div class="max-w-md">
+      <img src={~p"/images/teleprompter-demo.webp"} alt="" />
+    </div>
   </div>
   <div class="max-w-md w-full">
     <div class="flex gap-4">
@@ -12,10 +14,41 @@
         </.link>
       </div>
       <div class="flex-1 text-center">
-        <.link href={~p"/view"}>
-          <button class="btn btn-primary">Control</button>
+        <.link href={~p"/control"}>
+          <button class="btn btn-warning">Control</button>
         </.link>
       </div>
     </div>
+  </div>
+  <p>
+    Use the <em class="text-blue-500">View</em> to display the text on the teleprompter.
+  </p>
+  <p>
+    Use the <em class="text-orange-400">Control</em>
+    to edit the text, play it, and seek back/forward.
+  </p>
+  <div>
+    <style>
+      .bmc-btn {
+      scale: 0.8;
+      }
+      .bmc-btn-text {
+      width: unset !important;
+      }
+    </style>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+      data-name="bmc-button"
+      data-slug="chop.dev"
+      data-color="#FF5F5F"
+      data-emoji=""
+      data-font="Poppins"
+      data-text="Buy me a coffee"
+      data-outline-color="#000000"
+      data-font-color="#ffffff"
+      data-coffee-color="#FFDD00"
+    >
+    </script>
   </div>
 </div>
