@@ -11,20 +11,27 @@ defmodule LivepromptWeb.ViewLive do
   @impl true
   def render(%{loading: false} = assigns) do
     sample_content = """
-    <h1>This is example title</h1>
-
-    <p>You can edit this content in the <span class="text-warning font-bold">Control</span> panel</p>
+    <h1>How to use the app</h1>
+    <p>You can edit this content in the <span class="text-warning font-bold">Control</span> panel.</p>
+    <p>This application is intended to be used with <u>two devices</u>. One device serves as the Control, while the other functions as the View.</p>
+    <p>Changes made to the content of the Control will be immediately reflected in the View.</p>
+    <p>The Control and View listen to each other via the unique <span class="text-pink-400 font-bold">ID</span>.</p>
     """
 
     ~H"""
     <div phx-hook="LightOut" id="view-live-container" class="flex flex-col h-screen">
       <div class="pb-3 flex place-content-between">
         <.back navigate={~p"/"}>Back</.back>
+        <p><span class="text-pink-400 font-bold">ID:</span> <%= @uuid %></p>
         <p class="text-sm">
-          Go to <.link href={~p"/control"} class="text-warning font-bold">Control</.link>
+          Go to <.link href={~p"/control/#{@uuid}"} class="text-warning font-bold">Control</.link>
         </p>
       </div>
-      <div id="view-content" phx-hook="ViewContent" class="prose h-full overflow-y-scroll text-white">
+      <div
+        id="view-content"
+        phx-hook="ViewContent"
+        class="prose w-full h-full overflow-y-scroll text-white mx-auto"
+      >
         <%= if String.trim(@content) == "", do: raw(sample_content), else: raw(@content) %>
       </div>
     </div>
@@ -32,15 +39,16 @@ defmodule LivepromptWeb.ViewLive do
   end
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(%{"uuid" => uuid}, _session, socket) do
     socket = socket |> assign(page_title: "View")
 
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(Liveprompt.PubSub, "control")
+      Phoenix.PubSub.subscribe(Liveprompt.PubSub, "control" <> uuid)
 
       socket =
         socket
         |> assign(:loading, false)
+        |> assign(:uuid, uuid)
         |> assign(:content, "")
         |> assign(:range, 0)
 
@@ -48,6 +56,11 @@ defmodule LivepromptWeb.ViewLive do
     else
       {:ok, assign(socket, loading: true)}
     end
+  end
+
+  def mount(_params, _session, socket) do
+    uuid = Ecto.UUID.generate()
+    {:ok, redirect(socket, to: ~p"/view/#{uuid}")}
   end
 
   @impl true

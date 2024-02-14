@@ -23,7 +23,9 @@ defmodule LivepromptWeb.Router do
     get "/", PageController, :home
 
     live_session :default do
+      live "/view", ViewLive, :view
       live "/view/:uuid", ViewLive, :view
+      live "/control", ControlLive, :control
       live "/control/:uuid", ControlLive, :control
     end
   end

@@ -21,4 +21,27 @@ Hooks.ViewContent = {
     destroyed() {},
 };
 
+Hooks.ControlPlayButton = {
+    mounted() {
+        let playInterval = null;
+
+        this.handleEvent('control:play', payload => {
+            if (payload.play === false) {
+                clearInterval(playInterval);
+                return;
+            }
+            const el = document.getElementById('control-range');
+
+            playInterval = setInterval(() => {
+                el.value = +el.value + payload.speed;
+                if (el.value >= 100) {
+                    this.pushEvent('play', {});
+                } else {
+                    this.pushEvent('range', {range: el.value});
+                }
+            }, payload.tick);
+        });
+    },
+};
+
 export default Hooks;
