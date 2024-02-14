@@ -7,7 +7,7 @@
     <.live_title suffix=" · Liveprompt">
       <%= assigns[:page_title] || "Home" %>
     </.live_title>
-    <%= if Application.get_env(:liveprompt, :env) == :prod do %>
+    <%= if System.get_env("APP_ENV") == "prod" do %>
       <!-- Google tag (gtag.js) -->
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-XKLX26KNFB">
       </script>

@@ -3,6 +3,7 @@ services:
     app:
         build: .
         environment:
+            - APP_ENV=$APP_ENV
             - PHX_SERVER=true
             - PHX_HOST=$HOST
             - DATABASE_URL=ecto://root:password@host.docker.internal:5432/liveprompt_dev

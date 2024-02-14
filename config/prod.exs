@@ -8,8 +8,6 @@ import Config
 config :liveprompt, LivepromptWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json"
 
-config :livemprompt, env: :prod
-
 # Configures Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Liveprompt.Finch
 
