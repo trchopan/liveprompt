@@ -5,6 +5,15 @@ ARG DEBIAN_VERSION=bullseye-20231009-slim
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 
+FROM node:20-alpine AS builder-node
+
+WORKDIR /app
+
+COPY assets/package.json .
+COPY assets/package-lock.json .
+
+RUN npm install
+
 FROM ${BUILDER_IMAGE} as builder
 
 # install build dependencies
@@ -37,6 +46,7 @@ COPY priv priv
 COPY lib lib
 
 COPY assets assets
+COPY --from=builder-node /app/node_modules ./assets/node_modules
 
 # compile assets
 RUN mix assets.deploy
