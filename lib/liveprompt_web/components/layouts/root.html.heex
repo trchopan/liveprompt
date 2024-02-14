@@ -7,6 +7,19 @@
     <.live_title suffix=" · Liveprompt">
       <%= assigns[:page_title] || "Home" %>
     </.live_title>
+    <%= if Application.get_env(:liveprompt, :env) == :prod do %>
+      <!-- Google tag (gtag.js) -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-XKLX26KNFB">
+      </script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-XKLX26KNFB');
+      </script>
+    <% end %>
+
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>

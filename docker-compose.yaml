@@ -3,7 +3,8 @@ services:
     app:
         build: .
         environment:
-            - PHX_HOST=localhost
+            - PHX_SERVER=true
+            - PHX_HOST=$HOST
             - DATABASE_URL=ecto://root:password@host.docker.internal:5432/liveprompt_dev
             - SECRET_KEY_BASE="$SECRET_KEY_BASE"
             - SENDGRID_API_KEY="$SENDGRID_API_KEY"
