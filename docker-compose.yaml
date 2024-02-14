@@ -4,20 +4,12 @@ services:
         build: .
         environment:
             - PHX_HOST=localhost
-            - DATABASE_URL=ecto://root:password@database:5432/liveprompt_dev
-            - SECRET_KEY_BASE="gOJB97i23ufdq49KAfRSDq39Pu7okaU2ZTrzrj1PRs1+N4YRY0Y2QDJg83v0JbhV"
+            - DATABASE_URL=ecto://root:password@host.docker.internal:5432/liveprompt_dev
+            - SECRET_KEY_BASE="$SECRET_KEY_BASE"
+            - SENDGRID_API_KEY="$SENDGRID_API_KEY"
             - PORT=8080
         ports:
-            - 8081:8080
+            - 8080:8080
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         command: tail -f /dev/null
-
-    database:
-        image: 'ankane/pgvector'
-        volumes:
-            - ./db-data:/var/lib/postgresql/data/
-        environment:
-            POSTGRES_USER: root
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: liveprompt_dev
-        ports:
-            - 5432:5432

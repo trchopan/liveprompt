@@ -1,5 +1,7 @@
 version: '3.9'
 services:
     app:
+        ports:
+            - 8081:8080
+        command: /app/bin/liveprompt start
         restart: always
-
