@@ -70,7 +70,7 @@ defmodule LivepromptWeb.ControlLive do
         <.button
           id="control-play-button"
           phx-hook="ControlPlayButton"
-          phx-click="play"
+          phx-click={JS.push("play", value: %{play: !@play})}
           type="button"
           class={"btn-sm " <> if @play, do: "btn-warning", else: ""}
         >
@@ -201,8 +201,7 @@ defmodule LivepromptWeb.ControlLive do
   end
 
   @impl true
-  def handle_event("play", _params, socket) do
-    play = !socket.assigns.play
+  def handle_event("play", %{"play" => play}, socket) do
     speed = socket.assigns.speed
     tick = socket.assigns.tick
 

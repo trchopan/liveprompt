@@ -44,7 +44,7 @@ Hooks.ControlPlayButton = {
             playInterval = setInterval(() => {
                 el.value = +el.value + payload.speed;
                 if (el.value >= 100) {
-                    this.pushEvent('play', {});
+                    this.pushEvent('play', {play: false});
                 } else {
                     this.pushEvent('range', {range: el.value});
                 }
