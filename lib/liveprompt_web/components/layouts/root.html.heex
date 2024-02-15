@@ -4,9 +4,34 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title suffix=" - Liveprompt">
+    <.live_title suffix=" - Liveprompt by chop.dev">
       <%= assigns[:page_title] || "Home" %>
     </.live_title>
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Liveprompt by chop.dev" />
+    <meta
+      name="description"
+      content="Control a teleprompter remotely in real-time using the web."
+    />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://liveprompt.chop.dev/" />
+    <meta property="og:title" content="Liveprompt by chop.dev" />
+    <meta
+      property="og:description"
+      content="Control a teleprompter remotely in real-time using the web."
+    />
+    <meta property="og:image" content={~p"/images/teleprompter-demo.webp"} />
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://liveprompt.chop.dev/" />
+    <meta property="twitter:title" content="Liveprompt by chop.dev" />
+    <meta
+      property="twitter:description"
+      content="Control a teleprompter remotely in real-time using the web."
+    />
+    <meta property="twitter:image" content={~p"/images/teleprompter-demo.webp"} />
+
     <%= if System.get_env("APP_ENV") == "prod" do %>
       <!-- Google tag (gtag.js) -->
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-XKLX26KNFB">
