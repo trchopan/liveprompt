@@ -1,5 +1,5 @@
 defmodule LivepromptWeb.ViewControl.ValueAdjustLive do
-  use Phoenix.LiveComponent
+  use LivepromptWeb, :live_component
 
   @impl true
   def render(assigns) do

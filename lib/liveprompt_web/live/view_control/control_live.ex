@@ -61,7 +61,14 @@ defmodule LivepromptWeb.ControlLive do
     <div>
       <div class="pb-3 flex place-content-between">
         <.back navigate={~p"/"}>Back</.back>
-        <p><span class="text-pink-400 font-bold">ID:</span> <%= @uuid %></p>
+        <div class="flex items-center gap-2">
+          <p><span class="text-pink-400 font-bold">ID:</span> <%= @uuid %></p>
+          <.live_component
+            module={LivepromptWeb.ViewControl.QrcodeLive}
+            id="qr-code-modal"
+            uuid={@uuid}
+          />
+        </div>
         <p class="text-sm">
           Go to <.link href={~p"/view/#{@uuid}"} class="text-primary font-bold">View</.link>
         </p>

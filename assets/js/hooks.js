@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 const Hooks = {};
 
 Hooks.LightOut = {
@@ -6,6 +8,52 @@ Hooks.LightOut = {
     },
     destroyed() {
         document.body.classList.remove('lightout');
+    },
+};
+
+Hooks.QRCodeModal = {
+    mounted() {
+        const viewBtn = document.getElementById('qr-code-view');
+        const viewCanvas = document.getElementById('view-qr');
+        const controlBtn = document.getElementById('qr-code-control');
+        const controlCanvas = document.getElementById('control-qr');
+
+        const setActive = (btnEl, canvasEl, mode) => {
+            if (mode === false) {
+                btnEl.classList.remove('tab-active');
+                canvasEl.classList.remove('block');
+                canvasEl.classList.add('hidden');
+            } else {
+                btnEl.classList.add('tab-active');
+                canvasEl.classList.add('block');
+                canvasEl.classList.remove('hidden');
+            }
+        };
+
+        viewBtn.addEventListener('click', () => {
+            setActive(viewBtn, viewCanvas, true);
+            setActive(controlBtn, controlCanvas, false);
+        });
+
+        controlBtn.addEventListener('click', () => {
+            setActive(viewBtn, viewCanvas, false);
+            setActive(controlBtn, controlCanvas, true);
+        });
+
+        const options = {
+            margin: 2,
+        };
+
+        const uuid = this.el.dataset.uuid;
+        const host = window.location.origin;
+
+        QRCode.toCanvas(viewCanvas, `${host}/view/${uuid}`, options, function (error) {
+            if (error) console.error(error);
+        });
+
+        QRCode.toCanvas(controlCanvas, `${host}/control/${uuid}`, options, function (error) {
+            if (error) console.error(error);
+        });
     },
 };
 
