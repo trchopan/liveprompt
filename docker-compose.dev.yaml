@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+    app:
+        build: .
+        environment:
+            - DATABASE_URL=ecto://root:password@database:5432/liveprompt_dev
+            - PORT=8080
+        ports:
+            - 8080:8080
+        command: tail -f /dev/null
+
+    database:
+        image: 'ankane/pgvector'
+        volumes:
+            - ./db-data:/var/lib/postgresql/data/
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: liveprompt_dev
+        ports:
+            - 5432:5432
