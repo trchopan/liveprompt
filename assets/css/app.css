@@ -1,6 +1,6 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 /* This file is for your main application CSS */
 
@@ -10,4 +10,8 @@ body {
 
 .lightout {
     @apply bg-black;
+}
+
+.horizontal-flip {
+    transform: scaleX(-1);
 }

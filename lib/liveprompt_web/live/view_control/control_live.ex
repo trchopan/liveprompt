@@ -77,6 +77,14 @@ defmodule LivepromptWeb.ControlLive do
           Play
         </.button>
 
+        <.button
+          phx-click="flip"
+          type="button"
+          class={"btn-sm " <> if @flip, do: "btn-warning", else: ""}
+        >
+          Flip
+        </.button>
+
         <.live_component
           module={LivepromptWeb.ViewControl.ValueAdjustLive}
           id="adjust-speed"
@@ -144,6 +152,7 @@ defmodule LivepromptWeb.ControlLive do
       socket =
         socket
         |> assign(:loading, false)
+        |> assign(:flip, false)
         |> assign(:play, false)
         |> assign(:tick, 500)
         |> assign(:speed, 0.5)
@@ -201,6 +210,18 @@ defmodule LivepromptWeb.ControlLive do
       socket
       |> push_event("control:play", %{play: play, speed: speed, tick: tick})
       |> assign(:play, play)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("flip", _params, socket) do
+    flip = !socket.assigns.flip
+
+    socket =
+      socket
+      |> broadcast_control({:flip, flip})
+      |> assign(:flip, flip)
 
     {:noreply, socket}
   end

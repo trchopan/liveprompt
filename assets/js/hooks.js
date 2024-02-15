@@ -11,11 +11,20 @@ Hooks.LightOut = {
 
 Hooks.ViewContent = {
     mounted() {
-        this.handleEvent('view-content:range', payload => {
+        this.handleEvent('view:range', payload => {
             const el = this.el;
             const percent = payload.range;
             // scroll element to percentage
             el.scrollTop = (el.scrollHeight - el.clientHeight) * (percent / 100);
+        });
+
+        this.handleEvent('view:flip', payload => {
+            const el = this.el;
+            if (payload.flip) {
+                el.classList.add('horizontal-flip');
+            } else {
+                el.classList.remove('horizontal-flip');
+            }
         });
     },
     destroyed() {},

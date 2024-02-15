@@ -20,7 +20,7 @@ defmodule LivepromptWeb.ViewLive do
 
     ~H"""
     <div phx-hook="LightOut" id="view-live-container" class="flex flex-col h-screen">
-      <div class="pb-3 flex place-content-between">
+      <div class="pb-2 flex place-content-between">
         <.back navigate={~p"/"}>Back</.back>
         <p><span class="text-pink-400 font-bold">ID:</span> <%= @uuid %></p>
         <p class="text-sm">
@@ -49,6 +49,7 @@ defmodule LivepromptWeb.ViewLive do
         socket
         |> assign(:loading, false)
         |> assign(:uuid, uuid)
+        |> assign(:flip, false)
         |> assign(:content, "")
         |> assign(:range, 0)
 
@@ -79,10 +80,20 @@ defmodule LivepromptWeb.ViewLive do
   def handle_info({:range, range}, socket) do
     socket =
       socket
-      |> push_event("view-content:range", %{range: range})
+      |> push_event("view:range", %{range: range})
       |> assign(range: range)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:flip, flip}, socket) do
+    socket =
+      socket
+      |> push_event("view:flip", %{flip: flip})
+      |> assign(flip: flip)
+
+    {:noreply, assign(socket, content: "")}
   end
 
   @impl true
