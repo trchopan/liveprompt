@@ -20,20 +20,12 @@ defmodule LivepromptWeb.ViewLive do
 
     ~H"""
     <div phx-hook="LightOut" id="view-live-container" class="flex flex-col h-screen">
-      <div class="pb-2 flex place-content-between">
-        <.back navigate={~p"/"}>Back</.back>
-        <div class="flex items-center gap-2">
-          <p><span class="text-pink-400 font-bold">ID:</span> <%= @uuid %></p>
-          <.live_component
-            module={LivepromptWeb.ViewControl.QrcodeLive}
-            id="qr-code-modal"
-            uuid={@uuid}
-          />
-        </div>
-        <p class="text-sm">
-          Go to <.link href={~p"/control/#{@uuid}"} class="text-warning font-bold">Control</.link>
-        </p>
-      </div>
+      <.live_component
+        module={LivepromptWeb.ViewControl.ViewControlTopLive}
+        id="view-control-top"
+        uuid={@uuid}
+        is_control={true}
+      />
       <div
         id="view-content"
         phx-hook="ViewContent"

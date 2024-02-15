@@ -59,21 +59,13 @@ defmodule LivepromptWeb.ControlLive do
   def render(%{loading: false} = assigns) do
     ~H"""
     <div>
-      <div class="pb-3 flex place-content-between">
-        <.back navigate={~p"/"}>Back</.back>
-        <div class="flex items-center gap-2">
-          <p><span class="text-pink-400 font-bold">ID:</span> <%= @uuid %></p>
-          <.live_component
-            module={LivepromptWeb.ViewControl.QrcodeLive}
-            id="qr-code-modal"
-            uuid={@uuid}
-          />
-        </div>
-        <p class="text-sm">
-          Go to <.link href={~p"/view/#{@uuid}"} class="text-primary font-bold">View</.link>
-        </p>
-      </div>
-      <div class="pb-3 flex justify-center gap-3">
+      <.live_component
+        module={LivepromptWeb.ViewControl.ViewControlTopLive}
+        id="view-control-top"
+        uuid={@uuid}
+        is_control={false}
+      />
+      <div class="pb-3 grid grid-cols-2 md:grid-cols-4 items-center justify-center gap-3">
         <.button
           id="control-play-button"
           phx-hook="ControlPlayButton"

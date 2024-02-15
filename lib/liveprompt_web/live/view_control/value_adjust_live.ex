@@ -4,7 +4,7 @@ defmodule LivepromptWeb.ViewControl.ValueAdjustLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div class="flex items-center justify-center">
       <%= if @disabled do %>
         <div><%= render_slot(@inner_block) %></div>
       <% else %>
