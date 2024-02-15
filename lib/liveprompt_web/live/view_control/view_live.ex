@@ -93,7 +93,7 @@ defmodule LivepromptWeb.ViewLive do
       |> push_event("view:flip", %{flip: flip})
       |> assign(flip: flip)
 
-    {:noreply, assign(socket, content: "")}
+    {:noreply, socket}
   end
 
   @impl true
