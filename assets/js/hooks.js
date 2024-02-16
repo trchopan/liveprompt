@@ -1,13 +1,18 @@
 import QRCode from 'qrcode';
+import NoSleep from 'nosleep.js';
+
+const noSleep = new NoSleep();
 
 const Hooks = {};
 
 Hooks.LightOut = {
     mounted() {
         document.body.classList.add('lightout');
+        noSleep.enable();
     },
     destroyed() {
         document.body.classList.remove('lightout');
+        noSleep.disable();
     },
 };
 
