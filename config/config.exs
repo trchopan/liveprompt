@@ -9,7 +9,8 @@ import Config
 
 config :liveprompt,
   ecto_repos: [Liveprompt.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  youtube_introduction_video: "https://www.youtube.com/watch?v=EWS77VEta1Y"
 
 # Configures the endpoint
 config :liveprompt, LivepromptWeb.Endpoint,

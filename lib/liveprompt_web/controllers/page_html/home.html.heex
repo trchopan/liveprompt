@@ -3,7 +3,11 @@
     <h1 class="text-3xl font-bold">Liveprompt</h1>
     <p>Control a teleprompter remotely in real-time using the web.</p>
     <div class="max-w-md">
-      <a href="https://www.youtube.com/watch?v=EWS77VEta1Y" target="_blank" class="flex flex-col gap-4 relative">
+      <a
+        href={Application.get_env(:liveprompt, :youtube_introduction_video)}
+        target="_blank"
+        class="flex flex-col gap-4 relative"
+      >
         <img src={~p"/images/teleprompter-demo.webp"} alt="" />
         <div class="absolute top-0 left-0 bottom-10 right-0 flex items-center justify-center opacity-50 hover:opacity-100">
           <img src={~p"/images/youtube-play.png"} alt="" class="w-16 h-16" />

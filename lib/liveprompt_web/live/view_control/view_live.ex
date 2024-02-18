@@ -10,7 +10,13 @@ defmodule LivepromptWeb.ViewLive do
 
   @impl true
   def render(%{loading: false} = assigns) do
+    youtube_introduction_video = Application.get_env(:liveprompt, :youtube_introduction_video)
+
     sample_content = """
+    <h1>See the introduction video</h1>
+    <p>
+      <a href="#{youtube_introduction_video}">Liveprompt Introduction</a>
+    </p>
     <h1>How to use the app</h1>
     <p>You can edit this content in the <span class="text-warning font-bold">Control</span> panel.</p>
     <p>This application is intended to be used with <u>two devices</u>. One device serves as the Control, while the other functions as the View.</p>
