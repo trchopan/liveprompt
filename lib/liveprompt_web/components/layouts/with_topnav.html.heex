@@ -15,47 +15,57 @@
   <!-- We not yet have register for User yet -->
   <!--
   <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end order-first md:order-last">
-    <%= if @current_user do %>
-      <li class="text-[0.8125rem] leading-6 text-zinc-900">
-        <%= @current_user.email %>
-      </li>
-      <li>
-        <.link
-          href={~p"/users/settings"}
-          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
-        >
-          Settings
-        </.link>
-      </li>
-      <li>
-        <.link
-          href={~p"/users/log_out"}
-          method="delete"
-          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
-        >
-          Log out
-        </.link>
-      </li>
-    <% else %>
-      <li>
-        <.link
-          href={~p"/users/register"}
-          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
-        >
-          Register
-        </.link>
-      </li>
-      <li>
-        <.link
-          href={~p"/users/log_in"}
-          class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
-        >
-          Log in
-        </.link>
-      </li>
-    <% end %>
+  <%= if @current_user do %>
+    <li class="text-[0.8125rem] leading-6 text-zinc-900"> <%= @current_user.email %> </li>
+    <li>
+    <.link
+    href={~p"/users/settings"}
+    class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+    >
+    Settings
+    </.link>
+    </li>
+    <li>
+    <.link
+    href={~p"/users/log_out"}
+    method="delete"
+    class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+    >
+    Log out
+    </.link>
+    </li>
+  <% else %>
+    <li>
+    <.link
+    href={~p"/users/register"}
+    class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+    >
+    Register
+    </.link>
+    </li>
+    <li>
+    <.link
+    href={~p"/users/log_in"}
+    class="text-[0.8125rem] leading-6 text-stone-300 font-semibold hover:text-stone-400"
+    >
+    Log in
+    </.link>
+    </li>
+  <% end %>
   </ul>
   -->
+  <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js">
+  </script>
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css"
+  />
+  <ul>
+    <li>
+      <.live_component module={LivepromptWeb.UserSignInLive} id="user-sign-in" />
+    </li>
+  </ul>
 </header>
 <main class="px-4 py-20 sm:px-6 lg:px-8 md:py-1">
   <div class="mx-auto max-w-2xl">

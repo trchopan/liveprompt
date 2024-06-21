@@ -75,8 +75,8 @@ defmodule LivepromptWeb.ViewLive do
       {:noreply, assign(socket, content: html_doc)}
     else
       {:error, html_doc, message} ->
-        IO.inspect(html_doc, label: "error")
-        IO.inspect(message, label: "error")
+        IO.inspect(html_doc, label: "html_doc")
+        IO.inspect(message, label: "message")
         {:noreply, socket}
     end
   end

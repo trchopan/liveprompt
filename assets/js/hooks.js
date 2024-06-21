@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
 import NoSleep from 'nosleep.js';
+import {signInWithGoogle} from './signin';
 
 const noSleep = new NoSleep();
 
@@ -49,16 +50,16 @@ Hooks.QRCodeModal = {
             margin: 2,
         };
 
-        const uuid = this.el.dataset.uuid;
         const host = window.location.origin;
+        const uuid = this.el.dataset.uuid;
 
-        QRCode.toCanvas(viewCanvas, `${host}/view/${uuid}`, options, function (error) {
+        const handleError = error => {
             if (error) console.error(error);
-        });
+        };
 
-        QRCode.toCanvas(controlCanvas, `${host}/control/${uuid}`, options, function (error) {
-            if (error) console.error(error);
-        });
+        QRCode.toCanvas(viewCanvas, `${host}/view/${uuid}`, options, handleError);
+
+        QRCode.toCanvas(controlCanvas, `${host}/control/${uuid}`, options, handleError);
     },
 };
 
@@ -80,7 +81,6 @@ Hooks.ViewContent = {
             }
         });
     },
-    destroyed() {},
 };
 
 Hooks.ControlPlayButton = {
@@ -102,6 +102,15 @@ Hooks.ControlPlayButton = {
                     this.pushEvent('range', {range: el.value});
                 }
             }, payload.tick);
+        });
+    },
+};
+
+Hooks.SignIn = {
+    mounted() {
+        this.handleEvent('sign-in', async payload => {
+            const {token, user} = await signInWithGoogle();
+            this.pushEvent('signed-in', {token, user});
         });
     },
 };

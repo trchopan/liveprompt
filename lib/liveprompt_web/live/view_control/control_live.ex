@@ -127,6 +127,9 @@ defmodule LivepromptWeb.ControlLive do
               placeholder="text"
               phx-change="content"
             />
+            <%= if @error_content do %>
+              <div><% @error_content %></div>
+            <% end %>
           </.simple_form>
         </div>
       </div>
@@ -157,6 +160,7 @@ defmodule LivepromptWeb.ControlLive do
         |> assign(:speed, 0.5)
         |> assign(:range, 0)
         |> assign(:form, form)
+        |> assign(:error_content, "")
 
       {:ok, socket, temporary_assigns: [form: form]}
     else
@@ -237,8 +241,18 @@ defmodule LivepromptWeb.ControlLive do
   end
 
   @impl true
-  def handle_event("content", %{"content" => content}, socket),
-    do: {:noreply, broadcast_control(socket, {:content, content})}
+  def handle_event("content", %{"content" => content}, socket) do
+    if length(content) < 1000 do
+      socket =
+        socket
+        |> assign(:error_content, "")
+        |> broadcast_control({:content, content})
+
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, :error_content, "Too long content")}
+    end
+  end
 
   defp broadcast_control(socket, payload) do
     uuid = socket.assigns.uuid

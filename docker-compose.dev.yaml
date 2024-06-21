@@ -10,7 +10,7 @@ services:
         command: tail -f /dev/null
 
     database:
-        image: 'ankane/pgvector'
+        image: 'postgres:15'
         volumes:
             - ./db-data:/var/lib/postgresql/data/
         environment:
