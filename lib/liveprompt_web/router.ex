@@ -22,11 +22,18 @@ defmodule LivepromptWeb.Router do
 
     get "/", PageController, :home
 
-    live_session :default do
-      live "/view", ViewLive, :view
-      live "/view/:uuid", ViewLive, :view
-      live "/control", ControlLive, :control
-      live "/control/:uuid", ControlLive, :control
+    live_session :list_content,
+      on_mount: [{LivepromptWeb.UserAuth, :ensure_authenticated}],
+      layout: {LivepromptWeb.Layouts, :with_topnav} do
+      live "/contents", ViewControl.ContentListLive
+    end
+
+    live_session :view_control_application,
+      on_mount: [{LivepromptWeb.UserAuth, :mount_current_user}] do
+      live "/views", ViewLive
+      live "/views/:content_id", ViewLive
+      live "/controls", ControlLive
+      live "/controls/:content_id", ControlLive
     end
   end
 
@@ -58,7 +65,8 @@ defmodule LivepromptWeb.Router do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
     live_session :redirect_if_user_is_authenticated,
-      on_mount: [{LivepromptWeb.UserAuth, :redirect_if_user_is_authenticated}] do
+      on_mount: [{LivepromptWeb.UserAuth, :redirect_if_user_is_authenticated}],
+      layout: {LivepromptWeb.Layouts, :with_topnav} do
       live "/users/register", UserRegistrationLive, :new
       live "/users/log_in", UserLoginLive, :new
       live "/users/reset_password", UserForgotPasswordLive, :new

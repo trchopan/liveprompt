@@ -1,78 +1,62 @@
 import QRCode from 'qrcode';
 import NoSleep from 'nosleep.js';
-import {signInWithGoogle} from './signin';
+import Markdownit from 'markdown-it';
 
 const noSleep = new NoSleep();
+const md = Markdownit({html: true});
 
 const Hooks = {};
 
 Hooks.LightOut = {
     mounted() {
         document.body.classList.add('lightout');
-        noSleep.enable();
+        // noSleep.enable();
     },
     destroyed() {
         document.body.classList.remove('lightout');
-        noSleep.disable();
+        // noSleep.disable();
     },
 };
 
-Hooks.QRCodeModal = {
+Hooks.QRCodeRender = {
     mounted() {
-        const viewBtn = document.getElementById('qr-code-view');
-        const viewCanvas = document.getElementById('view-qr');
-        const controlBtn = document.getElementById('qr-code-control');
-        const controlCanvas = document.getElementById('control-qr');
+        const doRender = () => {
+            const options = {
+                margin: 2,
+            };
 
-        const setActive = (btnEl, canvasEl, mode) => {
-            if (mode === false) {
-                btnEl.classList.remove('tab-active');
-                canvasEl.classList.remove('block');
-                canvasEl.classList.add('hidden');
-            } else {
-                btnEl.classList.add('tab-active');
-                canvasEl.classList.add('block');
-                canvasEl.classList.remove('hidden');
-            }
+            const text = this.el.dataset.text;
+
+            const handleError = error => {
+                if (error) console.error(error);
+            };
+
+            QRCode.toCanvas(this.el, text, options, handleError);
         };
-
-        viewBtn.addEventListener('click', () => {
-            setActive(viewBtn, viewCanvas, true);
-            setActive(controlBtn, controlCanvas, false);
+        doRender();
+        this.handleEvent('switch_tab', () => {
+            doRender();
         });
-
-        controlBtn.addEventListener('click', () => {
-            setActive(viewBtn, viewCanvas, false);
-            setActive(controlBtn, controlCanvas, true);
-        });
-
-        const options = {
-            margin: 2,
-        };
-
-        const host = window.location.origin;
-        const uuid = this.el.dataset.uuid;
-
-        const handleError = error => {
-            if (error) console.error(error);
-        };
-
-        QRCode.toCanvas(viewCanvas, `${host}/view/${uuid}`, options, handleError);
-
-        QRCode.toCanvas(controlCanvas, `${host}/control/${uuid}`, options, handleError);
     },
 };
 
 Hooks.ViewContent = {
     mounted() {
-        this.handleEvent('view:range', payload => {
+        this.handleEvent('view_content', payload => {
+            console.log('>>', payload);
+            const content = payload.content;
+            this.el.innerHTML = md.render(content);
+        });
+        this.handleEvent('view_scroll', payload => {
+            console.log('>>', payload);
             const el = this.el;
-            const percent = payload.range;
+            const percent = payload.scroll;
             // scroll element to percentage
             el.scrollTop = (el.scrollHeight - el.clientHeight) * (percent / 100);
         });
 
-        this.handleEvent('view:flip', payload => {
+        this.handleEvent('view_flip', payload => {
+            console.log('>>', payload);
             const el = this.el;
             if (payload.flip) {
                 el.classList.add('horizontal-flip');
@@ -106,12 +90,9 @@ Hooks.ControlPlayButton = {
     },
 };
 
-Hooks.SignIn = {
+Hooks.DatetimeFmt = {
     mounted() {
-        this.handleEvent('sign-in', async payload => {
-            const {token, user} = await signInWithGoogle();
-            this.pushEvent('signed-in', {token, user});
-        });
+        this.el.innerText = new Date(this.el.dataset.datetime).toLocaleString();
     },
 };
 

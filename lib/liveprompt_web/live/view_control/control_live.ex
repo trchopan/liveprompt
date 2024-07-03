@@ -1,52 +1,9 @@
 defmodule LivepromptWeb.ControlLive do
+  require Logger
+  alias Liveprompt.ViewControls
+  alias Liveprompt.ViewControls.Content
+  alias LivepromptWeb.ViewControl.Components
   use LivepromptWeb, :live_view
-
-  @speed_step 0.2
-  @tick_step 100
-
-  @default_content """
-  # Ora reliquit memorant saepe referuntur
-
-  ## Cristis duarum
-
-  Lorem markdownum ab *silicem* Herculea eratque ingratos, ubi claudor dentes,
-  refers tepentibus mori, [illi laedor est](http://trahentisolidumve.org/illis)
-  silva. Fixit aliquam numerumque Phoceus modum solvit tigres oscula fallacia
-  fluentia, **exciderit**! Fatur fata pete Theseus, spatiosum quamvis.
-
-  Leto Ceres data, adest adsimilare infitiatur Troica necis, terribilesque mecum
-  prosiliunt nimius subitis miseram. Esse
-  [colubrae](http://achilles-frequento.com/adfectus-ingeniis) ore inde,
-  stagnumque, mihi erat corpora. Undas prius non non vix autumni, sors, **una
-  anima hunc** amplexo, Finierat *egredior*.
-
-  ## Errare alta tibi ales inde mundus
-
-  Herbae carmine Mavortis aquas: apud nec movisse acer liquores mavult. Esto
-  imitata [Iovisque](http://credar.net/piscibus-aeneaden), humili tibi genetrix
-  in, lexque non mihi fulmen, fertur tibi famularia.
-
-    ripping_balancing_macro += ftpEup * 1;
-    switchPim(snow_sql, 5 + pitch - mapSuperscalar, 5 - operating_backbone -
-            inkjet_wi_cifs);
-    dualFlops = phpIcqVolume;
-    var ram = 91;
-    cd_vertical(basic);
-
-  ## Manu soporem quoque et tosti lavere denique
-
-  Cum multi Alcyonen digiti: versus: viae sacra Tegeaea aperit starent ignesque,
-  Iliacas increvisse **parte potuitque**. Petent inpia; imber sint, intus modo
-  pectora patefecit percusso.
-
-  1. Solus est metu reponunt
-  2. Querellae solum
-  3. Figere nec summa
-
-  Et oscula tali gravis deficiunt nigra ea dedisti suffusus verba exilio toros
-  maeonis prima contudit sollerti? Tamen mox breve vaccae in non mea mater putares
-  et natas cacumine adfixa suo fecit **frustra protinus**.
-  """
 
   @impl true
   def render(%{loading: true} = assigns) do
@@ -59,110 +16,99 @@ defmodule LivepromptWeb.ControlLive do
   def render(%{loading: false} = assigns) do
     ~H"""
     <div>
-      <.live_component
-        module={LivepromptWeb.ViewControl.ViewControlTopLive}
-        id="view-control-top"
-        uuid={@uuid}
-        is_control={false}
+      <Components.top_view_control
+        current_user={@current_user}
+        content_id={@content.id}
+        is_control={true}
       />
       <div class="pb-3 grid grid-cols-2 md:grid-cols-4 items-center justify-center gap-3">
-        <.button
-          id="control-play-button"
-          phx-hook="ControlPlayButton"
-          phx-click={JS.push("play", value: %{play: !@play})}
+        <button
+          phx-click="play"
           type="button"
-          class={"btn-sm " <> if @play, do: "btn-warning", else: ""}
+          class={"btn btn-sm " <> if @play, do: "btn-warning", else: ""}
         >
           Play
-        </.button>
+        </button>
 
-        <.button
+        <button
           phx-click="flip"
           type="button"
-          class={"btn-sm " <> if @flip, do: "btn-warning", else: ""}
+          class={"btn btn-sm " <> if @flip, do: "btn-warning", else: ""}
         >
           Flip
-        </.button>
+        </button>
 
-        <.live_component
-          module={LivepromptWeb.ViewControl.ValueAdjustLive}
-          id="adjust-speed"
-          disabled={@play == true}
-          step={0.2}
-          decrease="decrease-speed"
-          increase="increase-speed"
-        >
-          <div>Speed: <%= @speed %> %</div>
-        </.live_component>
+        <Components.value_adjust
+          disabled={@play}
+          display={"Speed: #{@speed} %"}
+          value={@speed}
+          step={@speed_step}
+          change_event="speed_changed"
+        />
 
-        <.live_component
-          module={LivepromptWeb.ViewControl.ValueAdjustLive}
-          id="adjust-tick"
-          disabled={@play == true}
-          step={100}
-          decrease="decrease-tick"
-          increase="increase-tick"
-        >
-          <div>Tick: <%= @tick %> ms</div>
-        </.live_component>
+        <Components.value_adjust
+          disabled={@play}
+          display={"Tick: #{@tick} s"}
+          value={@tick}
+          step={@tick_step}
+          change_event="tick_changed"
+        />
       </div>
       <div>
-        <div>
-          <.simple_form for={@form} phx-change="validate" phx-submit="content">
-            <.input
-              id="control-range"
-              field={@form[:range]}
-              type="range"
-              min={0.0}
-              max={100.0}
-              step={0.2}
-              label="Seek"
-              phx-change="range"
-            />
-            <.input
-              field={@form[:content]}
-              type="textarea"
-              rows="10"
-              label="Content"
-              placeholder="text"
-              phx-change="content"
-            />
-            <%= if @error_content do %>
-              <div><% @error_content %></div>
-            <% end %>
-          </.simple_form>
-        </div>
+        <.simple_form for={@scroll_form}>
+          <.input
+            field={@scroll_form[:value]}
+            type="range"
+            min={0.0}
+            max={100.0}
+            step={0.2}
+            label="Seek"
+            phx-change="scroll_changed"
+          />
+        </.simple_form>
+      </div>
+      <div>
+        <.simple_form for={@form} id="controller_form" phx-change="validate" phx-submit="save">
+          <%= if @current_user != nil do %>
+            <.input field={@form[:name]} type="text" label="Name" placeholder="Name" />
+          <% end %>
+          <.input
+            field={@form[:content]}
+            type="textarea"
+            rows="10"
+            label="Content"
+            placeholder="Content"
+          />
+          <%= if @current_user != nil do %>
+            <.button type="submit">Save</.button>
+          <% end %>
+        </.simple_form>
       </div>
     </div>
     """
   end
 
   @impl true
-  def mount(%{"uuid" => uuid}, _session, socket) do
-    socket =
-      socket
-      |> assign(page_title: "Control")
-      |> assign(uuid: uuid)
+  def mount(%{"content_id" => content_id}, _session, socket) do
+    socket = socket |> assign(page_title: "Control")
 
     if connected?(socket) do
-      form =
-        to_form(%{
-          "content" => @default_content,
-          "range" => 0
-        })
+      maybe_socket =
+        {:ok, socket}
+        |> Components.check_invalid_content_id(content_id)
+        |> Components.check_content_is_found(content_id)
+        |> Components.check_content_is_private(
+          socket.assigns.current_user,
+          fallback_content(content_id)
+        )
 
-      socket =
-        socket
-        |> assign(:loading, false)
-        |> assign(:flip, false)
-        |> assign(:play, false)
-        |> assign(:tick, 500)
-        |> assign(:speed, 0.5)
-        |> assign(:range, 0)
-        |> assign(:form, form)
-        |> assign(:error_content, "")
+      case maybe_socket do
+        {:error, socket} ->
+          {:ok, socket}
 
-      {:ok, socket, temporary_assigns: [form: form]}
+        {:ok, socket} ->
+          {:ok, mount_with_content(socket)}
+      end
     else
       {:ok, assign(socket, loading: true)}
     end
@@ -170,104 +116,165 @@ defmodule LivepromptWeb.ControlLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    uuid = Ecto.UUID.generate()
-    {:ok, redirect(socket, to: ~p"/control/#{uuid}")}
+    content_id = Ecto.UUID.generate()
+    {:ok, redirect(socket, to: ~p"/controls/#{content_id}")}
+  end
+
+  defp mount_with_content(socket) do
+    content = socket.assigns.content
+    content_changeset = Content.changeset(content)
+
+    socket
+    |> assign(:loading, false)
+    |> assign(:form, to_form(content_changeset, as: "content"))
+    |> assign(:scroll_form, to_form(%{"value" => 0.0}))
+    |> assign(:play, false)
+    |> assign(:flip, false)
+    # How many percentage to move per tick
+    |> assign(:speed, 2.0)
+    |> assign(:speed_step, 0.5)
+    # How fast in ms should the view tick
+    |> assign(:tick, 0.5)
+    |> assign(:tick_step, 0.5)
   end
 
   @impl true
-  def handle_event("validate", _params, socket) do
-    {:noreply, socket}
+  def handle_event("save", %{"content" => content_params}, socket) do
+    content = socket.assigns.content
+
+    case ViewControls.update_content(content, content_params) do
+      {:ok, _} ->
+        {:noreply, socket}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, form: to_form(changeset))}
+    end
   end
 
   @impl true
-  def handle_event("decrease-speed", _params, socket) do
-    speed = change_value(socket.assigns.speed, -@speed_step, 0.0, 5.0)
-    {:noreply, assign(socket, :speed, speed)}
+  def handle_event("validate", %{"content" => content_params}, socket) do
+    content = socket.assigns.content
+    changeset = ViewControls.change_content(content, content_params)
+
+    if changeset.valid?() do
+      broadcast_control(
+        socket,
+        {
+          :content,
+          %Content{
+            id: content.id,
+            name: content.name,
+            content: content_params["content"]
+          }
+        }
+      )
+    end
+
+    form =
+      changeset
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, form: form)}
   end
 
   @impl true
-  def handle_event("increase-speed", _params, socket) do
-    speed = change_value(socket.assigns.speed, +@speed_step, 0.0, 5.0)
-    {:noreply, assign(socket, :speed, speed)}
+  def handle_event("speed_changed", %{"value" => speed}, socket) do
+    {:noreply, assign(socket, speed: limit_range_value(speed, 1.0, 5.0))}
   end
 
   @impl true
-  def handle_event("decrease-tick", _params, socket) do
-    tick = change_value(socket.assigns.tick, -@tick_step, 100, 2000)
-    {:noreply, assign(socket, :tick, tick)}
-  end
-
-  @impl true
-  def handle_event("increase-tick", _params, socket) do
-    tick = change_value(socket.assigns.tick, +@tick_step, 100, 2000)
-    {:noreply, assign(socket, :tick, tick)}
-  end
-
-  @impl true
-  def handle_event("play", %{"play" => play}, socket) do
-    speed = socket.assigns.speed
-    tick = socket.assigns.tick
-
-    socket =
-      socket
-      |> push_event("control:play", %{play: play, speed: speed, tick: tick})
-      |> assign(:play, play)
-
-    {:noreply, socket}
+  def handle_event("tick_changed", %{"value" => tick}, socket) do
+    {:noreply, assign(socket, tick: limit_range_value(tick, 0.5, 2))}
   end
 
   @impl true
   def handle_event("flip", _params, socket) do
     flip = !socket.assigns.flip
+    socket = socket |> broadcast_control({:flip, flip}) |> assign(:flip, flip)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("scroll_changed", %{"value" => scroll}, socket) do
+    {scroll, _} = Float.parse(scroll)
 
     socket =
       socket
-      |> broadcast_control({:flip, flip})
-      |> assign(:flip, flip)
+      |> assign(:scroll_form, to_form(%{"value" => scroll}))
+      |> broadcast_control({:scroll, scroll})
 
     {:noreply, socket}
   end
 
   @impl true
-  def handle_event("range", %{"range" => range}, socket) do
-    {range, _} = Float.parse(range)
+  def handle_event("play", _params, socket) do
+    play = !socket.assigns.play
 
-    socket =
-      socket
-      |> broadcast_control({:range, range})
-      |> assign(:range, range)
+    if play do
+      Kernel.send(self(), :do_tick)
+    end
 
-    {:noreply, socket}
+    {:noreply, assign(socket, play: play)}
   end
 
   @impl true
-  def handle_event("content", %{"content" => content}, socket) do
-    if length(content) < 1000 do
+  def handle_info(:do_tick, socket) do
+    play = socket.assigns.play
+    IO.inspect(play, label: "PLAY")
+
+    if play do
+      tick = socket.assigns.tick
+      speed = socket.assigns.speed
+      scroll = socket.assigns.scroll_form.params["value"] + speed
+
       socket =
         socket
-        |> assign(:error_content, "")
-        |> broadcast_control({:content, content})
+        |> assign(:scroll_form, to_form(%{"value" => scroll}))
+        |> assign(:play, scroll < 100.0)
+        |> broadcast_control({:scroll, scroll})
+
+      :timer.send_after(round(tick * 1000), self(), :do_tick)
 
       {:noreply, socket}
     else
-      {:noreply, assign(socket, :error_content, "Too long content")}
+      {:noreply, socket}
     end
   end
 
   defp broadcast_control(socket, payload) do
-    uuid = socket.assigns.uuid
-    Phoenix.PubSub.broadcast!(Liveprompt.PubSub, "control" <> uuid, payload)
-    socket
+    content_id = socket.assigns.content.id
+
+    case Phoenix.PubSub.broadcast(Liveprompt.PubSub, "control" <> content_id, payload) do
+      {:error, err} ->
+        Logger.error("Error broadcast control event", %{err: err})
+        socket |> put_flash(:error, "Failed to broadcast control event")
+
+      :ok ->
+        socket
+    end
   end
 
-  defp change_value(value, change, min, max) do
-    new_value = value + change
-    new_value = if is_float(value), do: Float.round(new_value, 2), else: new_value
+  defp limit_range_value(value, min, max) do
+    new_value = if is_float(value), do: Float.round(value, 2), else: value
 
-    if min <= new_value and new_value <= max do
-      new_value
-    else
-      value
+    cond do
+      new_value < min ->
+        min
+
+      new_value > max ->
+        max
+
+      true ->
+        new_value
     end
+  end
+
+  defp fallback_content(content_id) do
+    %Content{
+      id: content_id,
+      name: "Public",
+      content: Components.lorem_content()
+    }
   end
 end

@@ -4,7 +4,7 @@
     <p>Control a teleprompter remotely in real-time using the web.</p>
     <div class="max-w-md">
       <a
-        href={Application.get_env(:liveprompt, :youtube_introduction_video)}
+        href={Const.encode(:youtube_introduction_video)}
         target="_blank"
         class="flex flex-col gap-4 relative"
       >
@@ -16,20 +16,29 @@
       </a>
     </div>
   </div>
-  <div class="max-w-md w-full">
-    <div class="flex gap-4">
-      <div class="flex-1 text-center">
-        <.link href={~p"/view"}>
-          <button class="btn btn-primary">View</button>
-        </.link>
-      </div>
-      <div class="flex-1 text-center">
-        <.link href={~p"/control"}>
-          <button class="btn btn-warning">Control</button>
-        </.link>
+  <%= if @current_user do %>
+    <div class="flex justify-center">
+      <.link href={~p"/contents"}>
+        <button class="btn btn-primary">My Contents</button>
+      </.link>
+    </div>
+  <% else %>
+    <div class="max-w-md w-full">
+      <div class="flex gap-4">
+        <div class="flex-1 text-center">
+          <.link href={~p"/views"}>
+            <button class="btn btn-primary">View</button>
+          </.link>
+        </div>
+        <div class="flex-1 text-center">
+          <.link href={~p"/controls"}>
+            <button class="btn btn-warning">Control</button>
+          </.link>
+        </div>
       </div>
     </div>
-  </div>
+  <% end %>
+
   <p>
     Use the <em class="text-blue-500">View</em> to display the text on the teleprompter.
   </p>

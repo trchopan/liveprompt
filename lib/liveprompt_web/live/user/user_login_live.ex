@@ -1,5 +1,4 @@
 defmodule LivepromptWeb.UserLoginLive do
-  alias Phoenix.Flash
   use LivepromptWeb, :live_view
 
   def render(assigns) do
@@ -21,6 +20,7 @@ defmodule LivepromptWeb.UserLoginLive do
         <.input field={@form[:password]} type="password" label="Password" required />
 
         <:actions>
+          <.input field={@form[:remember_me]} type="checkbox" label="Keep me logged in" />
           <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
             Forgot your password?
           </.link>
@@ -36,7 +36,7 @@ defmodule LivepromptWeb.UserLoginLive do
   end
 
   def mount(_params, _session, socket) do
-    email = Flash.get(socket.assigns.flash, :email)
+    email = live_flash(socket.assigns.flash, :email)
     form = to_form(%{"email" => email}, as: "user")
     {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
   end

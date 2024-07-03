@@ -624,6 +624,16 @@ defmodule LivepromptWeb.CoreComponents do
     |> JS.focus_first(to: "##{id}-content")
   end
 
+  def show_modal_daisy(js \\ %JS{}, id) when is_binary(id) do
+    js
+    |> JS.add_class("modal-open", to: "##{id}")
+  end
+
+  def hide_modal_daisy(js \\ %JS{}, id) when is_binary(id) do
+    js
+    |> JS.remove_class("modal-open", to: "##{id}")
+  end
+
   def hide_modal(js \\ %JS{}, id) do
     js
     |> JS.hide(
