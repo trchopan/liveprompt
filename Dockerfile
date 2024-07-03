@@ -1,9 +1,5 @@
-ARG ELIXIR_VERSION=1.17.1
-ARG OTP_VERSION=26.2.2
-ARG DEBIAN_VERSION=buster-20240612-slim
-
-ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG BUILDER_IMAGE="hexpm/elixir:1.17.1-erlang-26.1.2-debian-buster-20240612-slim"
+ARG RUNNER_IMAGE="debian:buster-20240612-slim"
 
 FROM node:20-alpine AS builder-node
 
