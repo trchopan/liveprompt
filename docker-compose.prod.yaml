@@ -5,3 +5,14 @@ services:
         ports:
             - 8083:8080
         command: /app/bin/liveprompt start
+
+    database:
+        image: 'postgres:15'
+        volumes:
+            - ./db-data:/var/lib/postgresql/data/
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: liveprompt_dev
+        ports:
+            - 5432:5432
