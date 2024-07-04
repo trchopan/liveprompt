@@ -1,15 +1,17 @@
 services:
     app:
+        build: .
         restart: always
+        environment:
+            - APP_ENV=$APP_ENV
+            - PHX_SERVER=true
+            - PHX_HOST=$HOST
+            - DATABASE_URL=ecto://root:password@host.docker.internal:5432/liveprompt_dev
+            - SECRET_KEY_BASE="$SECRET_KEY_BASE"
+            - SENDGRID_API_KEY="$SENDGRID_API_KEY"
+            - PORT=8080
         ports:
             - 8083:8080
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         command: /app/bin/liveprompt start
-
-    database:
-        image: 'postgres:15'
-        volumes:
-            - ./db-data:/var/lib/postgresql/data/
-        environment:
-            POSTGRES_USER: root
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: liveprompt_dev

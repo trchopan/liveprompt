@@ -1,13 +1,4 @@
 services:
-    app:
-        build: .
-        environment:
-            - DATABASE_URL=ecto://root:password@database:5432/liveprompt_dev
-            - PORT=8080
-        ports:
-            - 8080:8080
-        command: tail -f /dev/null
-
     database:
         image: 'postgres:15'
         volumes:
