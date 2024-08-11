@@ -8,6 +8,9 @@ import Config
 config :liveprompt, LivepromptWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json"
 
+config :liveprompt, cleanup_interval: :timer.minutes(30)
+config :liveprompt, cleanup_update_allowance: :timer.hours(24)
+
 # Configures Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Liveprompt.Finch
 

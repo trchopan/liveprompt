@@ -16,6 +16,10 @@ defmodule Liveprompt.Application do
       {Finch, name: Liveprompt.Finch},
       # Start a worker by calling: Liveprompt.Worker.start_link(arg)
       # {Liveprompt.Worker, arg},
+      # Start Cleanup Job
+      {Liveprompt.CleanupJobSupervisor,
+       cleanup_interval: Application.get_env(:liveprompt, :cleanup_interval),
+       cleanup_update_allowance: Application.get_env(:liveprompt, :cleanup_update_allowance)},
       # Start to serve requests, typically the last entry
       LivepromptWeb.Endpoint
     ]

@@ -10,11 +10,11 @@ const Hooks = {};
 Hooks.LightOut = {
     mounted() {
         document.body.classList.add('lightout');
-        // noSleep.enable();
+        noSleep.enable();
     },
     destroyed() {
         document.body.classList.remove('lightout');
-        // noSleep.disable();
+        noSleep.disable();
     },
 };
 
@@ -51,6 +51,7 @@ Hooks.ViewContent = {
             console.log('>>', payload);
             const el = this.el;
             const percent = payload.scroll;
+
             // scroll element to percentage
             el.scrollTop = (el.scrollHeight - el.clientHeight) * (percent / 100);
         });
@@ -67,31 +68,12 @@ Hooks.ViewContent = {
     },
 };
 
-Hooks.ControlPlayButton = {
-    mounted() {
-        let playInterval = null;
-
-        this.handleEvent('control:play', payload => {
-            if (payload.play === false) {
-                clearInterval(playInterval);
-                return;
-            }
-            const el = document.getElementById('control-range');
-
-            playInterval = setInterval(() => {
-                el.value = +el.value + payload.speed;
-                if (el.value >= 100) {
-                    this.pushEvent('play', {play: false});
-                } else {
-                    this.pushEvent('range', {range: el.value});
-                }
-            }, payload.tick);
-        });
-    },
-};
-
 Hooks.DatetimeFmt = {
     mounted() {
+        this.handleEvent('validate', () => {
+            this.el.innerHTML = new Date().toLocaleString();
+        });
+        console.log('Heree>>', this.el.dataset);
         this.el.innerText = new Date(this.el.dataset.datetime).toLocaleString();
     },
 };

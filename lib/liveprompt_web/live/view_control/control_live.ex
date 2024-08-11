@@ -41,17 +41,15 @@ defmodule LivepromptWeb.ControlLive do
         <Components.value_adjust
           disabled={@play}
           display={"Speed: #{@speed} %"}
-          value={@speed}
-          step={@speed_step}
-          change_event="speed_changed"
+          reduce={JS.push("speed_changed", value: %{value: @speed - @speed_step})}
+          increase={JS.push("speed_changed", value: %{value: @speed + @speed_step})}
         />
 
         <Components.value_adjust
           disabled={@play}
           display={"Tick: #{@tick} s"}
-          value={@tick}
-          step={@tick_step}
-          change_event="tick_changed"
+          reduce={JS.push("tick_changed", value: %{value: @tick - @tick_step})}
+          increase={JS.push("tick_changed", value: %{value: @tick + @tick_step})}
         />
       </div>
       <div>
@@ -79,9 +77,33 @@ defmodule LivepromptWeb.ControlLive do
             label="Content"
             placeholder="Content"
           />
-          <%= if @current_user != nil do %>
+          <div class="flex">
             <.button type="submit">Save</.button>
-          <% end %>
+            <div class="flex-grow"></div>
+            <%= if @current_user != nil do %>
+              <.button
+                type="button"
+                class="btn btn-square btn-outline"
+                phx-click="delete"
+                data-confirm="Are you sure?"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </.button>
+            <% end %>
+          </div>
         </.simple_form>
       </div>
     </div>
@@ -93,21 +115,22 @@ defmodule LivepromptWeb.ControlLive do
     socket = socket |> assign(page_title: "Control")
 
     if connected?(socket) do
-      maybe_socket =
-        {:ok, socket}
-        |> Components.check_invalid_content_id(content_id)
-        |> Components.check_content_is_found(content_id)
-        |> Components.check_content_is_private(
-          socket.assigns.current_user,
-          fallback_content(content_id)
-        )
-
-      case maybe_socket do
-        {:error, socket} ->
+      with {:ok, socket} <- Components.check_invalid_content_id(socket, content_id),
+           {:ok, socket} <- Components.get_content_2(socket, content_id),
+           content = socket.assigns.content,
+           current_user = socket.assigns.current_user,
+           {:ok, socket} <-
+             Components.check_user_is_owner(socket, content, current_user) do
+        {:ok, socket |> mount_ui()}
+      else
+        {:error, socket, :bad_content_id} ->
           {:ok, socket}
 
-        {:ok, socket} ->
-          {:ok, mount_with_content(socket)}
+        {:error, socket, :not_found_content} ->
+          {:ok, Components.handle_not_found_content(socket)}
+
+        {:error, socket, :user_is_not_content_owner} ->
+          {:ok, Components.handle_user_is_not_content_owner(socket)}
       end
     else
       {:ok, assign(socket, loading: true)}
@@ -120,7 +143,7 @@ defmodule LivepromptWeb.ControlLive do
     {:ok, redirect(socket, to: ~p"/controls/#{content_id}")}
   end
 
-  defp mount_with_content(socket) do
+  defp mount_ui(socket) do
     content = socket.assigns.content
     content_changeset = Content.changeset(content)
 
@@ -130,7 +153,7 @@ defmodule LivepromptWeb.ControlLive do
     |> assign(:scroll_form, to_form(%{"value" => 0.0}))
     |> assign(:play, false)
     |> assign(:flip, false)
-    # How many percentage to move per tick
+    # How many percent to move per tick
     |> assign(:speed, 2.0)
     |> assign(:speed_step, 0.5)
     # How fast in ms should the view tick
@@ -212,14 +235,30 @@ defmodule LivepromptWeb.ControlLive do
     play = !socket.assigns.play
 
     if play do
-      Kernel.send(self(), :do_tick)
+      Kernel.send(self(), "do_tick")
     end
 
     {:noreply, assign(socket, play: play)}
   end
 
   @impl true
-  def handle_info(:do_tick, socket) do
+  def handle_event("delete", _params, socket) do
+    content = socket.assigns.content
+
+    if content.user_id == nil do
+      socket =
+        socket
+        |> put_flash(:error, "Cannot delete public content.")
+
+      {:noreply, socket}
+    else
+      {:ok, _} = ViewControls.delete_content(content)
+      {:noreply, socket |> redirect(to: ~p"/contents")}
+    end
+  end
+
+  @impl true
+  def handle_info("do_tick", socket) do
     play = socket.assigns.play
     IO.inspect(play, label: "PLAY")
 
@@ -234,7 +273,7 @@ defmodule LivepromptWeb.ControlLive do
         |> assign(:play, scroll < 100.0)
         |> broadcast_control({:scroll, scroll})
 
-      :timer.send_after(round(tick * 1000), self(), :do_tick)
+      :timer.send_after(round(tick * 1000), self(), "do_tick")
 
       {:noreply, socket}
     else
@@ -268,13 +307,5 @@ defmodule LivepromptWeb.ControlLive do
       true ->
         new_value
     end
-  end
-
-  defp fallback_content(content_id) do
-    %Content{
-      id: content_id,
-      name: "Public",
-      content: Components.lorem_content()
-    }
   end
 end

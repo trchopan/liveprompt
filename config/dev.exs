@@ -65,6 +65,9 @@ config :liveprompt, LivepromptWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :liveprompt, dev_routes: true
 
+config :liveprompt, cleanup_interval: :timer.seconds(15)
+config :liveprompt, cleanup_update_allowance: :timer.seconds(30)
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 

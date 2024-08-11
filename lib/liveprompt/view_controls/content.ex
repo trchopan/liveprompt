@@ -19,7 +19,6 @@ defmodule Liveprompt.ViewControls.Content do
   def changeset(content, attrs \\ %{}) do
     content
     |> cast(attrs, [:name, :content])
-    |> validate_required([:name, :content])
     |> validate_name()
     |> validate_content()
   end
@@ -27,18 +26,18 @@ defmodule Liveprompt.ViewControls.Content do
   def name_changeset(content, attrs \\ %{}) do
     content
     |> cast(attrs, [:name])
-    |> validate_required([:name])
     |> validate_name()
   end
 
   def validate_name(changeset) do
     changeset
+    |> validate_required([:name])
     |> validate_length(:name, max: 255)
   end
 
   def validate_content(changeset) do
     changeset
-    |> validate_required([:name])
+    |> validate_required([:content])
     |> validate_length(:content, max: 20_000)
   end
 end

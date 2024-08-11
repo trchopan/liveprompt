@@ -1,4 +1,6 @@
 defmodule LivepromptWeb.ViewControl.Components do
+  alias Liveprompt.Accounts.User
+  alias Liveprompt.ViewControls.Content
   alias Liveprompt.ViewControls
   use LivepromptWeb, :html
   use LivepromptWeb, :live_view
@@ -69,6 +71,14 @@ defmodule LivepromptWeb.ViewControl.Components do
   - Back button
   - QR scan modal
   - Link to switch between view and control pages
+
+  ## Example
+
+      <.top_view_control
+        current_user={@current_user}
+        content_id={@content.id}
+        is_control={false}
+      />
   """
   attr :current_user, :map, required: true
   attr :content_id, :string, required: true
@@ -107,6 +117,24 @@ defmodule LivepromptWeb.ViewControl.Components do
     """
   end
 
+  @doc """
+  Value adjust component with 2 buttons, minus and plus with a value in middle.
+
+  ## Example
+
+        <.value_adjust
+          disabled={@play}
+          display={"Speed: {@speed} %"}
+          value={@speed}
+          step={@speed_step}
+          change_event="speed_changed"
+        />
+  """
+  attr :disabled, :boolean, required: true
+  attr :display, :string, required: true
+  attr :increase, JS, required: true
+  attr :reduce, JS, required: true
+
   def value_adjust(assigns) do
     ~H"""
     <div class="flex items-center justify-center">
@@ -114,19 +142,11 @@ defmodule LivepromptWeb.ViewControl.Components do
         <div class="text-sm"><%= @display %></div>
       <% else %>
         <div class="flex items-center gap-2">
-          <button
-            phx-click={JS.push(@change_event, value: %{value: @value - @step})}
-            type="button"
-            class="btn btn-sm"
-          >
+          <button phx-click={JS.exec(@reduce, "", to: "#noop")} type="button" class="btn btn-sm">
             -
           </button>
           <div class="text-sm"><%= @display %></div>
-          <button
-            phx-click={JS.push(@change_event, value: %{value: @value + @step})}
-            type="button"
-            class="btn btn-sm"
-          >
+          <button phx-click={JS.exec(@increase, "", to: "#noop")} type="button" class="btn btn-sm">
             +
           </button>
         </div>
@@ -135,74 +155,138 @@ defmodule LivepromptWeb.ViewControl.Components do
     """
   end
 
+  @doc """
+  Format the datetime in local format.
+
+  ## Example
+
+        <.datetime_local_fmt
+          id="some_id"
+          dt={udpated_at}
+        />
+  """
+  attr :id, :string, required: true
+  attr :dt, :any, required: true
+
+  def datetime_local_fmt(assigns) do
+    ~H"""
+    <span id={@id} phx-hook="DatetimeFmt" data-datetime={@dt}>
+      <%= @dt || "" %>
+    </span>
+    """
+  end
+
   def make_view_control_links(content_id) do
     {~p"/views/#{content_id}", ~p"/controls/#{content_id}"}
   end
 
-  def check_invalid_content_id(maybe_socket, content_id) do
-    case maybe_socket do
-      {:error, socket} ->
-        {:error, socket}
+  def check_invalid_content_id(socket, content_id) do
+    case Ecto.UUID.cast(content_id) do
+      :error ->
+        socket =
+          socket
+          |> put_flash(:error, "Bad content id format")
+          |> redirect(to: ~p"/")
 
-      {:ok, socket} ->
-        case Ecto.UUID.cast(content_id) do
-          :error ->
-            {:error,
-             socket
-             |> put_flash(:error, "Bad content id format")
-             |> redirect(to: ~p"/")}
+        {:error, socket, :bad_content_id}
 
-          {:ok, _} ->
-            {:ok, socket}
-        end
+      {:ok, _} ->
+        {:ok, socket}
     end
   end
 
-  def check_content_is_found(maybe_socket, content_id) do
-    case maybe_socket do
-      {:error, socket} ->
-        {:error, socket}
+  def get_content_2(socket, content_id) do
+    case ViewControls.get_content(content_id) do
+      nil ->
+        {:error, assign(socket, content: nil), :not_found_content}
 
-      {:ok, socket} ->
-        content = ViewControls.get_content(content_id)
+      content ->
         {:ok, assign(socket, content: content)}
     end
   end
 
-  def check_content_is_private(maybe_socket, user, fallback_content) do
-    case maybe_socket do
-      {:error, socket} ->
-        {:error, socket}
+  def get_content(socket, content_id) do
+    content = ViewControls.get_content(content_id)
+    {:ok, assign(socket, content: content)}
+  end
 
-      {:ok, socket} ->
-        content = socket.assigns.content
+  def check_user_is_owner(socket, %Content{} = content, nil) do
+    if content.user_id == nil do
+      # Content is public. Not belong to any user.
+      {:ok, socket}
+    else
+      # Public user trying to access private content
+      {:error, socket, :user_is_not_content_owner}
+    end
+  end
 
-        case {user, content} do
-          # Does not have user or content, it is public access
-          {nil, nil} ->
-            {:ok, assign(socket, content: fallback_content)}
+  def check_user_is_owner(socket, %Content{} = content, %User{} = user) do
+    if content.user_id == user.id do
+      {:ok, socket}
+    else
+      {:error, socket, :user_is_not_content_owner}
+    end
+  end
 
-          # Has user but not content, private access but not found content
-          {_, nil} ->
-            {
-              :error,
-              socket
-              |> put_flash(:error, "Not found content")
-              |> redirect(to: ~p"/contents")
-            }
+  def handle_not_found_content(socket) do
+    current_user = socket.assigns.current_user
 
-          {user, content} ->
-            if user == nil || user.id != content.user_id do
-              # Content does not belong to user
-              {
-                :error,
-                socket
-                |> put_flash(:error, "Content is private")
-                |> redirect(to: ~p"/users/log_in")
-              }
+    if current_user == nil do
+      {:ok, content} = ViewControls.create_public_content(view_instruction())
+
+      socket
+      |> put_flash(:info, "New content created")
+      |> redirect(to: ~p"/controls/#{content.id}")
+    else
+      socket
+      |> put_flash(:error, "Not found content or content not belong to you")
+      |> redirect(to: ~p"/contents")
+    end
+  end
+
+  def handle_user_is_not_content_owner(socket) do
+    redirect_to = if socket.assigns.current_user == nil, do: ~p"/", else: ~p"/contents"
+
+    socket
+    |> put_flash(:error, "Content is private")
+    |> redirect(to: redirect_to)
+  end
+
+  def check_content_is_private(socket, user, fallback_content) do
+    content = socket.assigns.content
+
+    case {user, content} do
+      # Does not have user or content, it is public access
+      {nil, nil} ->
+        {:ok, assign(socket, content: fallback_content)}
+
+      # Has user but not content, private access but not found content
+      {_, nil} ->
+        {
+          :error,
+          socket
+          |> put_flash(:error, "Not found content")
+          |> redirect(to: ~p"/contents")
+        }
+
+      {user, content} ->
+        if user == nil || user.id != content.user_id do
+          # Content does not belong to user
+          {
+            :error,
+            socket
+            |> put_flash(:error, "Content is private")
+            |> redirect(to: ~p"/users/log_in")
+          }
+        else
+          content =
+            if content.content == nil do
+              Map.replace!(content, :content, view_instruction())
             else
-              {:ok, assign(socket, content: content)}
+              content
             end
+
+          {:ok, assign(socket, content: content)}
         end
     end
   end

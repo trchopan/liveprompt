@@ -1,4 +1,5 @@
 defmodule LivepromptWeb.ViewControl.ContentListLive do
+  alias Plug.Parsers.JSON
   alias Liveprompt.ViewControls.Content
   alias LivepromptWeb.ViewControl.Components
   alias Liveprompt.ViewControls
@@ -20,7 +21,6 @@ defmodule LivepromptWeb.ViewControl.ContentListLive do
         :for={content <- @contents}
         class="p-5 h-[16.5rem] border border-stone-400 rounded flex flex-col"
       >
-        <% {view_link, control_link} = Components.make_view_control_links(content.id) %>
         <div class="font-bold text-sm text-stone-400 text-center border-b border-stone-400 pb-1 mb-1">
           <%= content.name %>
         </div>
@@ -35,9 +35,13 @@ defmodule LivepromptWeb.ViewControl.ContentListLive do
               id={"update-time-#{content.id}"}
               phx-hook="DatetimeFmt"
               data-datetime={content.updated_at}
-            />
+              phx-update="ignore"
+            >
+              <%= content.updated_at || "" %>
+            </span>
           </span>
           <div class="flex gap-2">
+            <% {view_link, control_link} = Components.make_view_control_links(content.id) %>
             <.link class="btn btn-sm btn-primary" href={view_link}>
               View
             </.link>
@@ -76,7 +80,7 @@ defmodule LivepromptWeb.ViewControl.ContentListLive do
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, form: form)}
+    {:noreply, socket |> assign(form: form)}
   end
 
   @impl true

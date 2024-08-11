@@ -14,7 +14,7 @@ defmodule Liveprompt.ViewControlsFixtures do
         content: "some content",
         name: "some name"
       })
-      |> Liveprompt.ViewControls.create_content()
+      |> Liveprompt.ViewControls.create_content_for_user()
 
     content
   end

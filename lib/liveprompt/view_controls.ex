@@ -59,14 +59,45 @@ defmodule Liveprompt.ViewControls do
   end
 
   @doc """
-  Creates a content.
+  Lists the public content that has updated_at older than the given timestamp.
 
   ## Examples
 
-      iex> create_content(%{field: value})
+      iex> ts = DateTime.utc_now() |> DateTime.add(-10, :second)
+      iex> list_public_content_older_than(ts)
+      [Content{}, ...]
+
+  """
+  def list_public_content_older_than(timestamp) when is_struct(timestamp, DateTime) do
+    from(c in Content, where: is_nil(c.user_id) and c.updated_at < ^timestamp)
+    |> Repo.all()
+  end
+
+  @doc """
+  Create a public content. Without user association.
+
+  ## Examples
+
+      iex> create_public_content(content)
       {:ok, %Content{}}
 
-      iex> create_content(%{field: bad_value})
+  """
+  @spec create_public_content(String.t()) :: {:ok, Content.t()}
+  def create_public_content(content) do
+    %Content{}
+    |> Content.changeset(%{name: "Public", content: content})
+    |> Repo.insert()
+  end
+
+  @doc """
+  Creates a content for a user.
+
+  ## Examples
+
+      iex> create_content_for_user(user, %{field: value})
+      {:ok, %Content{}}
+
+      iex> create_content_for_user(user, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
@@ -109,6 +140,19 @@ defmodule Liveprompt.ViewControls do
   """
   def delete_content(%Content{} = content) do
     Repo.delete(content)
+  end
+
+  @doc """
+  Deletes a content.
+
+  ## Examples
+
+      iex> bulk_delete_contents(content)
+      {:ok, %Content{}}
+
+  """
+  def bulk_delete_contents(ids) do
+    from(c in Content, where: c.id in ^ids) |> Repo.delete_all()
   end
 
   @doc """

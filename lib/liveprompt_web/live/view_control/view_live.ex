@@ -1,5 +1,4 @@
 defmodule LivepromptWeb.ViewLive do
-  alias Liveprompt.ViewControls.Content
   alias LivepromptWeb.ViewControl.Components
   use LivepromptWeb, :live_view
 
@@ -36,21 +35,22 @@ defmodule LivepromptWeb.ViewLive do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Liveprompt.PubSub, "control" <> content_id)
 
-      maybe_socket =
-        {:ok, socket}
-        |> Components.check_invalid_content_id(content_id)
-        |> Components.check_content_is_found(content_id)
-        |> Components.check_content_is_private(
-          socket.assigns.current_user,
-          fallback_content(content_id)
-        )
-
-      case maybe_socket do
-        {:error, socket} ->
+      with {:ok, socket} <- Components.check_invalid_content_id(socket, content_id),
+           {:ok, socket} <- Components.get_content_2(socket, content_id),
+           content = socket.assigns.content,
+           current_user = socket.assigns.current_user,
+           {:ok, socket} <-
+             Components.check_user_is_owner(socket, content, current_user) do
+        {:ok, socket |> mount_ui()}
+      else
+        {:error, socket, :bad_content_id} ->
           {:ok, socket}
 
-        {:ok, socket} ->
-          {:ok, mount_with_content(socket)}
+        {:error, socket, :not_found_content} ->
+          {:ok, Components.handle_not_found_content(socket)}
+
+        {:error, socket, :user_is_not_content_owner} ->
+          {:ok, Components.handle_user_is_not_content_owner(socket)}
       end
     else
       {:ok, assign(socket, loading: true)}
@@ -64,7 +64,7 @@ defmodule LivepromptWeb.ViewLive do
     {:ok, redirect(socket, to: view_link)}
   end
 
-  defp mount_with_content(socket) do
+  defp mount_ui(socket) do
     content = socket.assigns.content
 
     socket
@@ -104,13 +104,5 @@ defmodule LivepromptWeb.ViewLive do
       |> assign(flip: flip)
 
     {:noreply, socket}
-  end
-
-  defp fallback_content(content_id) do
-    %Content{
-      id: content_id,
-      name: "Public",
-      content: Components.view_instruction()
-    }
   end
 end
