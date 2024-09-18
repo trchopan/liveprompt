@@ -30,6 +30,13 @@ defmodule LivepromptWeb.ControlLive do
           Play
         </button>
 
+        <Components.value_adjust
+          disabled={@play}
+          display={"Speed: #{@speed}"}
+          reduce={JS.push("speed_changed", value: %{value: @speed - 0.5})}
+          increase={JS.push("speed_changed", value: %{value: @speed + 0.5})}
+        />
+
         <button
           phx-click="flip"
           type="button"
@@ -39,31 +46,10 @@ defmodule LivepromptWeb.ControlLive do
         </button>
 
         <Components.value_adjust
-          disabled={@play}
-          display={"Speed: #{@speed} %"}
-          reduce={JS.push("speed_changed", value: %{value: @speed - @speed_step})}
-          increase={JS.push("speed_changed", value: %{value: @speed + @speed_step})}
+          display={"Size: #{map_size_text(@size)}"}
+          reduce={JS.push("size_changed", value: %{value: @size - 1})}
+          increase={JS.push("size_changed", value: %{value: @size + 1})}
         />
-
-        <Components.value_adjust
-          disabled={@play}
-          display={"Tick: #{@tick} s"}
-          reduce={JS.push("tick_changed", value: %{value: @tick - @tick_step})}
-          increase={JS.push("tick_changed", value: %{value: @tick + @tick_step})}
-        />
-      </div>
-      <div>
-        <.simple_form for={@scroll_form}>
-          <.input
-            field={@scroll_form[:value]}
-            type="range"
-            min={0.0}
-            max={100.0}
-            step={0.2}
-            label="Seek"
-            phx-change="scroll_changed"
-          />
-        </.simple_form>
       </div>
       <div>
         <.simple_form for={@form} id="controller_form" phx-change="validate" phx-submit="save">
@@ -71,11 +57,14 @@ defmodule LivepromptWeb.ControlLive do
             <.input field={@form[:name]} type="text" label="Name" placeholder="Name" />
           <% end %>
           <.input
+            id="control-content"
+            phx-hook="ControlContent"
             field={@form[:content]}
             type="textarea"
             rows="10"
-            label="Content"
+            label="Content - Scroll the content to scroll the view"
             placeholder="Content"
+            id="control-content-inner"
           />
           <div class="flex">
             <.button type="submit">Save</.button>
@@ -112,19 +101,19 @@ defmodule LivepromptWeb.ControlLive do
 
   @impl true
   def mount(%{"content_id" => content_id}, _session, socket) do
-    socket = socket |> assign(page_title: "Control")
+    socket =
+      socket
+      |> assign(page_title: "Control")
+      |> assign(content_id: content_id)
 
     if connected?(socket) do
-      with {:ok, socket} <- Components.check_invalid_content_id(socket, content_id),
-           {:ok, socket} <- Components.get_content_2(socket, content_id),
-           content = socket.assigns.content,
-           current_user = socket.assigns.current_user,
-           {:ok, socket} <-
-             Components.check_user_is_owner(socket, content, current_user) do
+      with {:ok, socket} <- Components.check_invalid_content_id(socket),
+           {:ok, socket} <- Components.assign_content(socket),
+           {:ok, socket} <- Components.check_user_is_owner(socket) do
         {:ok, socket |> mount_ui()}
       else
         {:error, socket, :bad_content_id} ->
-          {:ok, socket}
+          {:ok, Components.handle_bad_content_id(socket)}
 
         {:error, socket, :not_found_content} ->
           {:ok, Components.handle_not_found_content(socket)}
@@ -150,15 +139,11 @@ defmodule LivepromptWeb.ControlLive do
     socket
     |> assign(:loading, false)
     |> assign(:form, to_form(content_changeset, as: "content"))
-    |> assign(:scroll_form, to_form(%{"value" => 0.0}))
     |> assign(:play, false)
     |> assign(:flip, false)
+    |> assign(:size, 0)
     # How many percent to move per tick
-    |> assign(:speed, 2.0)
-    |> assign(:speed_step, 0.5)
-    # How fast in ms should the view tick
-    |> assign(:tick, 0.5)
-    |> assign(:tick_step, 0.5)
+    |> assign(:speed, 1.0)
   end
 
   @impl true
@@ -166,11 +151,11 @@ defmodule LivepromptWeb.ControlLive do
     content = socket.assigns.content
 
     case ViewControls.update_content(content, content_params) do
-      {:ok, _} ->
-        {:noreply, socket}
+      {:ok, content} ->
+        {:noreply, socket |> assign(content: content)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+        {:noreply, socket |> assign(form: to_form(changeset))}
     end
   end
 
@@ -203,28 +188,30 @@ defmodule LivepromptWeb.ControlLive do
 
   @impl true
   def handle_event("speed_changed", %{"value" => speed}, socket) do
-    {:noreply, assign(socket, speed: limit_range_value(speed, 1.0, 5.0))}
+    {:noreply, assign(socket, speed: limit_range_value(speed, 0.5, 3.0))}
   end
 
   @impl true
-  def handle_event("tick_changed", %{"value" => tick}, socket) do
-    {:noreply, assign(socket, tick: limit_range_value(tick, 0.5, 2))}
+  def handle_event("size_changed", %{"value" => size}, socket) do
+    new_size = limit_range_value(size, 0, 2)
+
+    socket =
+      socket |> assign(size: new_size) |> broadcast_control({:size, new_size})
+
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("flip", _params, socket) do
     flip = !socket.assigns.flip
-    socket = socket |> broadcast_control({:flip, flip}) |> assign(:flip, flip)
+    socket = socket |> assign(:flip, flip) |> broadcast_control({:flip, flip})
     {:noreply, socket}
   end
 
   @impl true
-  def handle_event("scroll_changed", %{"value" => scroll}, socket) do
-    {scroll, _} = Float.parse(scroll)
-
+  def handle_event("scroll_changed", scroll, socket) do
     socket =
       socket
-      |> assign(:scroll_form, to_form(%{"value" => scroll}))
       |> broadcast_control({:scroll, scroll})
 
     {:noreply, socket}
@@ -234,9 +221,10 @@ defmodule LivepromptWeb.ControlLive do
   def handle_event("play", _params, socket) do
     play = !socket.assigns.play
 
-    if play do
-      Kernel.send(self(), "do_tick")
-    end
+    broadcast_control(
+      socket,
+      {:play, %{play: play, speed: socket.assigns.speed}}
+    )
 
     {:noreply, assign(socket, play: play)}
   end
@@ -254,30 +242,6 @@ defmodule LivepromptWeb.ControlLive do
     else
       {:ok, _} = ViewControls.delete_content(content)
       {:noreply, socket |> redirect(to: ~p"/contents")}
-    end
-  end
-
-  @impl true
-  def handle_info("do_tick", socket) do
-    play = socket.assigns.play
-    IO.inspect(play, label: "PLAY")
-
-    if play do
-      tick = socket.assigns.tick
-      speed = socket.assigns.speed
-      scroll = socket.assigns.scroll_form.params["value"] + speed
-
-      socket =
-        socket
-        |> assign(:scroll_form, to_form(%{"value" => scroll}))
-        |> assign(:play, scroll < 100.0)
-        |> broadcast_control({:scroll, scroll})
-
-      :timer.send_after(round(tick * 1000), self(), "do_tick")
-
-      {:noreply, socket}
-    else
-      {:noreply, socket}
     end
   end
 
@@ -308,4 +272,8 @@ defmodule LivepromptWeb.ControlLive do
         new_value
     end
   end
+
+  defp map_size_text(0), do: "base"
+  defp map_size_text(1), do: "medium"
+  defp map_size_text(2), do: "large"
 end

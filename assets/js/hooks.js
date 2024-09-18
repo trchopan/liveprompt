@@ -1,3 +1,4 @@
+import {throttle} from 'lodash';
 import QRCode from 'qrcode';
 import NoSleep from 'nosleep.js';
 import Markdownit from 'markdown-it';
@@ -40,31 +41,55 @@ Hooks.QRCodeRender = {
     },
 };
 
+Hooks.ControlContent = {
+    mounted() {
+        const doScrollEvent = throttle(percent => this.pushEvent('scroll_changed', percent), 100);
+        this.el.addEventListener('scroll', e => {
+            const percent =
+                (e.target.scrollTop / (e.target.scrollHeight - e.target.clientHeight)) * 100;
+            doScrollEvent(percent);
+        });
+    },
+};
+
 Hooks.ViewContent = {
     mounted() {
+        let play = false;
+        let lastTs;
+        const doScroll = (el, speed) => {
+            if (el.scrollTop > el.scrollHeight - el.clientHeight) return;
+            if (play === false) return;
+
+            requestAnimationFrame(time => {
+                if (!lastTs) lastTs = time;
+                const elapsed = time - lastTs;
+                const delta = (speed * elapsed) / 20;
+                if (delta > 1) {
+                    el.scrollTop += delta;
+                    lastTs = time;
+                }
+                doScroll(el, speed);
+            });
+        };
         this.handleEvent('view_content', payload => {
-            console.log('>>', payload);
             const content = payload.content;
             this.el.innerHTML = md.render(content);
         });
-        this.handleEvent('view_scroll', payload => {
-            console.log('>>', payload);
+        this.handleEvent('view_scroll_percent', payload => {
             const el = this.el;
             const percent = payload.scroll;
 
-            // scroll element to percentage
             el.scrollTop = (el.scrollHeight - el.clientHeight) * (percent / 100);
         });
-
-        this.handleEvent('view_flip', payload => {
-            console.log('>>', payload);
-            const el = this.el;
-            if (payload.flip) {
-                el.classList.add('horizontal-flip');
-            } else {
-                el.classList.remove('horizontal-flip');
-            }
+        this.handleEvent('play', payload => {
+            play = payload.play;
+            if (!play) return;
+            lastTs = undefined;
+            doScroll(this.el, payload.speed);
         });
+    },
+    updated() {
+        this.el.innerHTML = md.render(this.el.dataset.content);
     },
 };
 
@@ -73,7 +98,6 @@ Hooks.DatetimeFmt = {
         this.handleEvent('validate', () => {
             this.el.innerHTML = new Date().toLocaleString();
         });
-        console.log('Heree>>', this.el.dataset);
         this.el.innerText = new Date(this.el.dataset.datetime).toLocaleString();
     },
 };

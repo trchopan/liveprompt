@@ -1,55 +1,7 @@
 defmodule LivepromptWeb.ViewControl.Components do
-  alias Liveprompt.Accounts.User
-  alias Liveprompt.ViewControls.Content
   alias Liveprompt.ViewControls
   use LivepromptWeb, :html
   use LivepromptWeb, :live_view
-
-  def lorem_content do
-    """
-    # Ora reliquit memorant saepe referuntur
-
-    ## Cristis duarum
-
-    Lorem markdownum ab *silicem* Herculea eratque ingratos, ubi claudor dentes,
-    refers tepentibus mori, [illi laedor est](http://trahentisolidumve.org/illis)
-    silva. Fixit aliquam numerumque Phoceus modum solvit tigres oscula fallacia
-    fluentia, **exciderit**! Fatur fata pete Theseus, spatiosum quamvis.
-
-    Leto Ceres data, adest adsimilare infitiatur Troica necis, terribilesque mecum
-    prosiliunt nimius subitis miseram. Esse
-    [colubrae](http://achilles-frequento.com/adfectus-ingeniis) ore inde,
-    stagnumque, mihi erat corpora. Undas prius non non vix autumni, sors, **una
-    anima hunc** amplexo, Finierat *egredior*.
-
-    ## Errare alta tibi ales inde mundus
-
-    Herbae carmine Mavortis aquas: apud nec movisse acer liquores mavult. Esto
-    imitata [Iovisque](http://credar.net/piscibus-aeneaden), humili tibi genetrix
-    in, lexque non mihi fulmen, fertur tibi famularia.
-
-    ripping_balancing_macro += ftpEup * 1;
-    switchPim(snow_sql, 5 + pitch - mapSuperscalar, 5 - operating_backbone -
-    inkjet_wi_cifs);
-    dualFlops = phpIcqVolume;
-    var ram = 91;
-    cd_vertical(basic);
-
-    ## Manu soporem quoque et tosti lavere denique
-
-    Cum multi Alcyonen digiti: versus: viae sacra Tegeaea aperit starent ignesque,
-    Iliacas increvisse **parte potuitque**. Petent inpia; imber sint, intus modo
-    pectora patefecit percusso.
-
-    1. Solus est metu reponunt
-    2. Querellae solum
-    3. Figere nec summa
-
-    Et oscula tali gravis deficiunt nigra ea dedisti suffusus verba exilio toros
-    maeonis prima contudit sollerti? Tamen mox breve vaccae in non mea mater putares
-    et natas cacumine adfixa suo fecit **frustra protinus**.
-    """
-  end
 
   def view_instruction do
     """
@@ -130,7 +82,7 @@ defmodule LivepromptWeb.ViewControl.Components do
           change_event="speed_changed"
         />
   """
-  attr :disabled, :boolean, required: true
+  attr :disabled, :boolean, default: false
   attr :display, :string, required: true
   attr :increase, JS, required: true
   attr :reduce, JS, required: true
@@ -180,14 +132,11 @@ defmodule LivepromptWeb.ViewControl.Components do
     {~p"/views/#{content_id}", ~p"/controls/#{content_id}"}
   end
 
-  def check_invalid_content_id(socket, content_id) do
+  def check_invalid_content_id(socket) do
+    content_id = socket.assigns.content_id
+
     case Ecto.UUID.cast(content_id) do
       :error ->
-        socket =
-          socket
-          |> put_flash(:error, "Bad content id format")
-          |> redirect(to: ~p"/")
-
         {:error, socket, :bad_content_id}
 
       {:ok, _} ->
@@ -195,7 +144,9 @@ defmodule LivepromptWeb.ViewControl.Components do
     end
   end
 
-  def get_content_2(socket, content_id) do
+  def assign_content(socket) do
+    content_id = socket.assigns.content_id
+
     case ViewControls.get_content(content_id) do
       nil ->
         {:error, assign(socket, content: nil), :not_found_content}
@@ -205,27 +156,32 @@ defmodule LivepromptWeb.ViewControl.Components do
     end
   end
 
-  def get_content(socket, content_id) do
-    content = ViewControls.get_content(content_id)
-    {:ok, assign(socket, content: content)}
-  end
+  def check_user_is_owner(socket) do
+    content = socket.assigns.content
+    current_user = socket.assigns.current_user
 
-  def check_user_is_owner(socket, %Content{} = content, nil) do
-    if content.user_id == nil do
-      # Content is public. Not belong to any user.
-      {:ok, socket}
-    else
-      # Public user trying to access private content
-      {:error, socket, :user_is_not_content_owner}
+    case {content.user_id, current_user} do
+      {nil, _} ->
+        # Content is public, any user can read
+        {:ok, socket}
+
+      {_, nil} ->
+        # Public user trying to access private content
+        {:error, socket, :user_is_not_content_owner}
+
+      {c_user_id, current_user} ->
+        if c_user_id != current_user.id do
+          {:error, socket, :user_is_not_content_owner}
+        else
+          {:ok, socket}
+        end
     end
   end
 
-  def check_user_is_owner(socket, %Content{} = content, %User{} = user) do
-    if content.user_id == user.id do
-      {:ok, socket}
-    else
-      {:error, socket, :user_is_not_content_owner}
-    end
+  def handle_bad_content_id(socket) do
+    socket
+    |> put_flash(:error, "Bad content id format")
+    |> redirect(to: ~p"/")
   end
 
   def handle_not_found_content(socket) do
@@ -250,44 +206,5 @@ defmodule LivepromptWeb.ViewControl.Components do
     socket
     |> put_flash(:error, "Content is private")
     |> redirect(to: redirect_to)
-  end
-
-  def check_content_is_private(socket, user, fallback_content) do
-    content = socket.assigns.content
-
-    case {user, content} do
-      # Does not have user or content, it is public access
-      {nil, nil} ->
-        {:ok, assign(socket, content: fallback_content)}
-
-      # Has user but not content, private access but not found content
-      {_, nil} ->
-        {
-          :error,
-          socket
-          |> put_flash(:error, "Not found content")
-          |> redirect(to: ~p"/contents")
-        }
-
-      {user, content} ->
-        if user == nil || user.id != content.user_id do
-          # Content does not belong to user
-          {
-            :error,
-            socket
-            |> put_flash(:error, "Content is private")
-            |> redirect(to: ~p"/users/log_in")
-          }
-        else
-          content =
-            if content.content == nil do
-              Map.replace!(content, :content, view_instruction())
-            else
-              content
-            end
-
-          {:ok, assign(socket, content: content)}
-        end
-    end
   end
 end
