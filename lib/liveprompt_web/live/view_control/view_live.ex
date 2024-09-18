@@ -18,7 +18,6 @@ defmodule LivepromptWeb.ViewLive do
         content_id={@content.id}
         is_control={false}
       />
-      <pre><%= @size %></pre>
       <div
         id="view-content"
         phx-hook="ViewContent"
@@ -79,18 +78,13 @@ defmodule LivepromptWeb.ViewLive do
     |> assign(:flip, false)
     |> assign(:size, 0)
     |> assign(:range, 0.0)
-    |> push_event("view_content", %{content: content.content})
   end
 
   # Handle PubSub events
 
   @impl true
   def handle_info({:content, content}, socket) do
-    socket =
-      socket
-      |> push_event("view_content", %{content: content.content})
-
-    {:noreply, socket}
+    {:noreply, socket |> assign(content: content)}
   end
 
   @impl true

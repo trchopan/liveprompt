@@ -56,6 +56,7 @@ Hooks.ViewContent = {
     mounted() {
         let play = false;
         let lastTs;
+        this.el.innerHTML = md.render(this.el.dataset.content);
         const doScroll = (el, speed) => {
             if (el.scrollTop > el.scrollHeight - el.clientHeight) return;
             if (play === false) return;
@@ -71,10 +72,6 @@ Hooks.ViewContent = {
                 doScroll(el, speed);
             });
         };
-        this.handleEvent('view_content', payload => {
-            const content = payload.content;
-            this.el.innerHTML = md.render(content);
-        });
         this.handleEvent('view_scroll_percent', payload => {
             const el = this.el;
             const percent = payload.scroll;
